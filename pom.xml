@@ -15,7 +15,9 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
+        <module>data-repository</module>
         <module>spring-mvc-example</module>
+        <module>spring-webflux-example</module>
     </modules>
 
 

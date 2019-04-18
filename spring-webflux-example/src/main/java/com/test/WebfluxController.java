@@ -4,26 +4,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 
 @RestController
-public class MvcController {
-    private RestTemplate restTemplate = new RestTemplate();
-
-    @RequestMapping("/")
-    @ResponseBody
-    public String home() {
-        return "Hello World!";
-    }
-
+public class WebfluxController {
     @RequestMapping(value = "/blocking/{delay}")
     @ResponseBody
     public String blocking(@PathVariable("delay") int delay) throws InterruptedException {
         Thread.sleep(delay);
-        // reading from a file system or traditional database
         return createResponse(delay);
     }
 
@@ -32,7 +23,6 @@ public class MvcController {
     public Mono<String> nonBlocking(@PathVariable("delay") int delay) {
         return Mono
                 .just(createResponse(delay))
-                //.log()
                 .delayElement(Duration.ofMillis(delay));
     }
 
@@ -43,6 +33,10 @@ public class MvcController {
     @RequestMapping(value = "/ui/users")
     @ResponseBody
     public Mono<String> getUsers() {
-        return Mono.just(restTemplate.getForObject("http://localhost:8081/api/users", String.class));
+        return WebClient.create("http://localhost:8081")
+                .get()
+                .uri("/api/users")
+                .retrieve()
+                .bodyToMono(String.class);
     }
 }
