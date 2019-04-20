@@ -11,6 +11,9 @@ import java.time.Duration;
 
 @RestController
 public class WebfluxController {
+
+    private WebClient webClient = WebClient.create("http://localhost:8081");
+
     @RequestMapping(value = "/blocking/{delay}")
     @ResponseBody
     public String blocking(@PathVariable("delay") int delay) throws InterruptedException {
@@ -33,7 +36,7 @@ public class WebfluxController {
     @RequestMapping(value = "/ui/users")
     @ResponseBody
     public Mono<String> getUsers() {
-        return WebClient.create("http://localhost:8081")
+        return webClient
                 .get()
                 .uri("/api/users")
                 .retrieve()

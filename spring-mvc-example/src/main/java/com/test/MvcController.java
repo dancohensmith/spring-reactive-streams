@@ -13,12 +13,6 @@ import java.time.Duration;
 public class MvcController {
     private RestTemplate restTemplate = new RestTemplate();
 
-    @RequestMapping("/")
-    @ResponseBody
-    public String home() {
-        return "Hello World!";
-    }
-
     @RequestMapping(value = "/blocking/{delay}")
     @ResponseBody
     public String blocking(@PathVariable("delay") int delay) throws InterruptedException {
