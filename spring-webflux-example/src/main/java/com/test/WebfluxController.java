@@ -1,45 +1,40 @@
 package com.test;
 
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.reactive.function.client.WebClient;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
-
+@RequiredArgsConstructor
 @RestController
+@RequestMapping("/controller")
 public class WebfluxController {
 
-    private WebClient webClient = WebClient.create("http://localhost:8081");
+    private final UsersRepository usersRepository;
+    private final LocalResponseService localResponseService;
 
-    @RequestMapping(value = "/blocking/{delay}")
+    @GetMapping(value = "/blocking/{delay}")
     @ResponseBody
-    public String blocking(@PathVariable("delay") int delay) throws InterruptedException {
-        Thread.sleep(delay);
-        return createResponse(delay);
+    public Mono<LocalResponseService.Response> blocking(@PathVariable("delay") int delay) {
+        return localResponseService.blocking(delay);
     }
 
-    @RequestMapping(value = "/nonBlocking/{delay}")
+    @GetMapping(value = "/nonBlocking/{delay}")
     @ResponseBody
-    public Mono<String> nonBlocking(@PathVariable("delay") int delay) {
-        return Mono
-                .just(createResponse(delay))
-                .delayElement(Duration.ofMillis(delay));
+    public Mono<LocalResponseService.Response> nonBlocking(@PathVariable("delay") int delay) {
+        return localResponseService.nonBlocking(delay);
     }
 
-    private String createResponse(int delay) {
-        return "{\"success\": true, \"delayInMillis\": " + delay + "}";
+    @GetMapping(value = "/legacyBlocking/{delay}")
+    @ResponseBody
+    public Mono<LocalResponseService.Response> legacyBlocking(@PathVariable("delay") int delay) {
+       return Mono.fromCallable(() -> localResponseService.blockingLegacy(delay)).subscribeOn(Schedulers.elastic());
+
     }
 
-    @RequestMapping(value = "/ui/users")
+    @GetMapping(value = "/ui/users")
     @ResponseBody
     public Mono<String> getUsers() {
-        return webClient
-                .get()
-                .uri("/api/users")
-                .retrieve()
-                .bodyToMono(String.class);
+        return usersRepository.users();
     }
 }
