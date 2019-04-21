@@ -21,7 +21,8 @@ public class WebFluxFnRouter {
   private RouterFunction<ServerResponse> routerFunctions(RouterFunctions.Builder builder) {
         return builder.GET("/blocking/{" + DELAY_PATH_VAR + "}",  handler::retrieveBlocking).
                 GET("/nonBlocking/{" + DELAY_PATH_VAR + "}", handler::retrieveNonBlocking)
-                .GET("/legacyNonBlocking/{" + DELAY_PATH_VAR + "}", handler::retrieveLegacyBlocking)
+                .GET("/legacyBlocking/{" + DELAY_PATH_VAR + "}", handler::retrieveLegacyBlocking)
+                .GET("/userRegistrations", handler::userRegistrations)
                 .GET("/ui/users", handler::retreiveUsers).build();
     }
 

@@ -1,4 +1,4 @@
-package com.test;
+package com.test.model;
 
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;

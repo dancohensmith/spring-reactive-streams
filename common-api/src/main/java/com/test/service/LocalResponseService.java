@@ -1,4 +1,4 @@
-package com.test;
+package com.test.service;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

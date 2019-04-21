@@ -1,14 +1,21 @@
 package com.test;
 
+import com.test.model.UserRegisteredEvent;
+import com.test.service.LocalResponseService;
+import com.test.model.UsersRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class WebfluxFnHandler {
 
 
@@ -34,6 +41,19 @@ public class WebfluxFnHandler {
     Mono<ServerResponse> retreiveUsers(ServerRequest serverRequest) {
         return ServerResponse.ok().body(usersRepository.users(), String.class);
     }
+
+    Mono<ServerResponse> userRegistrations(ServerRequest serverRequest) {
+        return ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_STREAM_JSON)
+                .body(userRegistrations(), UserRegisteredEvent.class);
+    }
+
+    Flux<UserRegisteredEvent> userRegistrations() {
+        return Flux.range(0, 10000).subscribeOn(Schedulers.single())
+                .map(id -> new UserRegisteredEvent(id, "John Smith " + id))
+                .onBackpressureDrop(userRegisteredEvent -> log.info("Dropped {}", userRegisteredEvent));
+    }
+
 
     private long delay(ServerRequest serverRequest) {
         return Long.parseLong(serverRequest.pathVariable(WebFluxFnRouter.DELAY_PATH_VAR));
