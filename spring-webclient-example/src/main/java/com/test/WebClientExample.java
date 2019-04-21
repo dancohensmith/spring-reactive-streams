@@ -1,24 +1,24 @@
 package com.test;
 
-import com.test.model.UserRegisteredEvent;
-import io.netty.util.concurrent.CompleteFuture;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.reactivestreams.Subscription;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.BaseSubscriber;
-import reactor.core.publisher.Hooks;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 
 @Slf4j
 public class WebClientExample {
+
+    @Data
+    @RequiredArgsConstructor
+    private static class UserRegisteredEvent {
+        private final long id;
+        private final String name;
+    }
+
     public static void main(String[] args) throws InterruptedException {
         try {
             Long received = WebClient.create("http://localhost:8083")
@@ -30,7 +30,7 @@ public class WebClientExample {
                     // back pressure example
                     .limitRate(10)
                     .delayElements(Duration.ofMillis(50))
-                    .doOnNext(userRegisteredEvent -> log.info("Recevied {}", userRegisteredEvent))
+                    .doOnNext(userRegisteredEvent -> log.info("Received {}", userRegisteredEvent))
                     .count().block();
 
             log.info("Total received {}", received );

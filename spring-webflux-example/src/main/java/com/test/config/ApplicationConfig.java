@@ -1,7 +1,6 @@
 package com.test.config;
 
 import com.test.WebFluxFnRouter;
-import com.test.service.LocalResponseService;
 import com.test.WebfluxController;
 import com.test.WebfluxFnHandler;
 import org.springframework.boot.SpringBootConfiguration;
@@ -18,19 +17,15 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 @EnableWebFlux
 @EnableAutoConfiguration
 public class ApplicationConfig {
+
     @Bean
-    public LocalResponseService localResponseService(){
-        return new LocalResponseService();
+    public WebfluxController webfluxController(){
+        return new WebfluxController();
     }
 
     @Bean
-    public WebfluxController webfluxController(LocalResponseService localResponseService){
-        return new WebfluxController(localResponseService);
-    }
-
-    @Bean
-    public WebfluxFnHandler webfluxFnHandler(LocalResponseService localResponseService){
-        return new WebfluxFnHandler(localResponseService);
+    public WebfluxFnHandler webfluxFnHandler(){
+        return new WebfluxFnHandler();
     }
 
     @Bean

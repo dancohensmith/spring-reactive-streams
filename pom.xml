@@ -18,7 +18,6 @@
         <module>user-service</module>
         <module>spring-mvc-example</module>
         <module>spring-webflux-example</module>
-        <module>common-api</module>
         <module>spring-webclient-example</module>
     </modules>
     <dependencyManagement>

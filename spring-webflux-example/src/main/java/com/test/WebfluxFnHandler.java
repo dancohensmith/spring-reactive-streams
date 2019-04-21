@@ -1,7 +1,6 @@
 package com.test;
 
-import com.test.model.UserRegisteredEvent;
-import com.test.service.LocalResponseService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -13,25 +12,58 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class WebfluxFnHandler {
 
+    @Data
+    @RequiredArgsConstructor
+    private static class UserRegisteredEvent {
+        private final long id;
+        private final String name;
+    }
 
-    private final LocalResponseService localResponseService;
+    @Data
+    @RequiredArgsConstructor
+    private static class Response {
+
+        private final boolean result;
+        private final long delayInMillis;
+
+    }
 
     Mono<ServerResponse> retrieveBlocking(ServerRequest serverRequest) {
+        long delay = delay(serverRequest);
         return ServerResponse.ok()
-                .body(localResponseService.blocking(delay(serverRequest)), LocalResponseService.Response.class);
+                .body(Mono.just(new Response(true, delay))
+                        .doOnNext(response -> {
+                            try {
+                                Thread.sleep(delay);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }), Response.class);
     }
 
     Mono<ServerResponse> retrieveNonBlocking(ServerRequest serverRequest) {
-        return ServerResponse.ok().body(localResponseService.nonBlocking(delay(serverRequest)), LocalResponseService.Response.class);
+        long delay = delay(serverRequest);
+        return ServerResponse.ok().body(Mono.just(new Response(true, delay))
+                .delayElement(Duration.ofMillis(delay)), Response.class);
     }
 
     Mono<ServerResponse> retrieveLegacyBlocking(ServerRequest serverRequest) {
-        return Mono.fromCallable(() -> localResponseService.blockingLegacy(delay(serverRequest)))
+        return Mono.fromCallable(() -> {
+            long delay = delay(serverRequest);
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            return new Response(true, delay);
+        })
                 .subscribeOn(Schedulers.elastic())
                 .flatMap(response -> ServerResponse.ok().syncBody(response));
 
@@ -57,7 +89,6 @@ public class WebfluxFnHandler {
                 .map(id -> new UserRegisteredEvent(id, "John Smith " + id))
                 .onBackpressureDrop(userRegisteredEvent -> log.info("Dropped {}", userRegisteredEvent));
     }
-
 
     private long delay(ServerRequest serverRequest) {
         return Long.parseLong(serverRequest.pathVariable(WebFluxFnRouter.DELAY_PATH_VAR));
