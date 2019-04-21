@@ -2,12 +2,12 @@
 package com.test;
 
 import com.test.service.LocalResponseService;
-import com.test.model.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -16,7 +16,6 @@ import reactor.core.scheduler.Schedulers;
 @RequiredArgsConstructor
 public class Controller {
 
-    private final UsersRepository usersRepository;
     private final LocalResponseService localResponseService;
 
     @GetMapping(value = "/blocking/{delay}")
@@ -37,6 +36,11 @@ public class Controller {
 
     @GetMapping(value = "/ui/users")
     public String getUsers() {
-        return usersRepository.users().block();
+        WebClient client = WebClient.create("http://localhost:8081");
+        return client
+                .get()
+                .uri("/api/users")
+                .retrieve()
+                .bodyToMono(String.class).block();
     }
 }

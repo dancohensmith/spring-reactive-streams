@@ -2,11 +2,11 @@ package com.test;
 
 import com.test.model.UserRegisteredEvent;
 import com.test.service.LocalResponseService;
-import com.test.model.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Flux;
@@ -20,7 +20,6 @@ public class WebfluxFnHandler {
 
 
     private final LocalResponseService localResponseService;
-    private final UsersRepository usersRepository;
 
     Mono<ServerResponse> retrieveBlocking(ServerRequest serverRequest) {
         return ServerResponse.ok()
@@ -39,7 +38,12 @@ public class WebfluxFnHandler {
     }
 
     Mono<ServerResponse> retreiveUsers(ServerRequest serverRequest) {
-        return ServerResponse.ok().body(usersRepository.users(), String.class);
+        WebClient client = WebClient.create("http://localhost:8081");
+        return ServerResponse.ok().body(client
+                .get()
+                .uri("/api/users")
+                .retrieve()
+                .bodyToMono(String.class), String.class);
     }
 
     Mono<ServerResponse> userRegistrations(ServerRequest serverRequest) {

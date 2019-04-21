@@ -2,7 +2,6 @@ package com.test.config;
 
 import com.test.WebFluxFnRouter;
 import com.test.service.LocalResponseService;
-import com.test.model.UsersRepository;
 import com.test.WebfluxController;
 import com.test.WebfluxFnHandler;
 import org.springframework.boot.SpringBootConfiguration;
@@ -25,19 +24,13 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public UsersRepository usersRepository(){
-        return new UsersRepository();
-    }
-
-
-    @Bean
-    public WebfluxController webfluxController(LocalResponseService localResponseService, UsersRepository  usersRepository){
-        return new WebfluxController(usersRepository, localResponseService);
+    public WebfluxController webfluxController(LocalResponseService localResponseService){
+        return new WebfluxController(localResponseService);
     }
 
     @Bean
-    public WebfluxFnHandler webfluxFnHandler(LocalResponseService localResponseService, UsersRepository  usersRepository){
-        return new WebfluxFnHandler(localResponseService, usersRepository);
+    public WebfluxFnHandler webfluxFnHandler(LocalResponseService localResponseService){
+        return new WebfluxFnHandler(localResponseService);
     }
 
     @Bean

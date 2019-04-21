@@ -1,9 +1,9 @@
 package com.test;
 
 import com.test.service.LocalResponseService;
-import com.test.model.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -12,7 +12,6 @@ import reactor.core.scheduler.Schedulers;
 @RequestMapping("/controller")
 public class WebfluxController {
 
-    private final UsersRepository usersRepository;
     private final LocalResponseService localResponseService;
 
     @GetMapping(value = "/blocking/{delay}")
@@ -37,6 +36,11 @@ public class WebfluxController {
     @GetMapping(value = "/ui/users")
     @ResponseBody
     public Mono<String> getUsers() {
-        return usersRepository.users();
+        WebClient client = WebClient.create("http://localhost:8081");
+        return client
+                .get()
+                .uri("/api/users")
+                .retrieve()
+                .bodyToMono(String.class);
     }
 }
