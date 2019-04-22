@@ -1,42 +1,63 @@
 package com.test;
 
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
+@RequiredArgsConstructor
 @RestController
+@RequestMapping("/controller")
 public class WebfluxController {
 
-    private WebClient webClient = WebClient.create("http://localhost:8081");
-
-    @RequestMapping(value = "/blocking/{delay}")
-    @ResponseBody
-    public String blocking(@PathVariable("delay") int delay) throws InterruptedException {
-        Thread.sleep(delay);
-        return createResponse(delay);
+    @Data
+    @RequiredArgsConstructor
+    public static class Response {
+        private final boolean success;
+        private final long delayInMillis;
     }
 
-    @RequestMapping(value = "/nonBlocking/{delay}")
-    @ResponseBody
-    public Mono<String> nonBlocking(@PathVariable("delay") int delay) {
-        return Mono
-                .just(createResponse(delay))
+    @GetMapping(value = "/blocking/{delay}")
+    public Mono<Response> blocking(@PathVariable("delay") long delay) {
+        return Mono.just(new Response(true, delay))
+                .doOnNext(response -> {
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+    }
+
+    @GetMapping(value = "/nonBlocking/{delay}")
+    public Mono<Response> nonBlocking(@PathVariable("delay") long delay) {
+        return Mono.just(new Response(true, delay))
                 .delayElement(Duration.ofMillis(delay));
     }
 
-    private String createResponse(int delay) {
-        return "{\"success\": true, \"delayInMillis\": " + delay + "}";
+    // This is pretty much the same as the /blocking/{delay} so perhaps we should replace it and have only one?
+    @GetMapping(value = "/legacyBlocking/{delay}")
+    public Mono<Response> legacyBlocking(@PathVariable("delay") long delay) {
+       return Mono.fromCallable(() -> {
+           try {
+               Thread.sleep(delay);
+           } catch (InterruptedException e) {
+               throw new RuntimeException(e);
+           }
+           return new Response(true, delay);
+       }).subscribeOn(Schedulers.elastic());
     }
 
-    @RequestMapping(value = "/ui/users")
-    @ResponseBody
+    private WebClient client = WebClient.create("http://localhost:8081");
+
+    @GetMapping(value = "/ui/users", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public Mono<String> getUsers() {
-        return webClient
+        return client
                 .get()
                 .uri("/api/users")
                 .retrieve()
