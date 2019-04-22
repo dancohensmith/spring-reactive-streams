@@ -14,6 +14,8 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -29,14 +31,12 @@ public class WebfluxFnHandler {
     @Data
     @RequiredArgsConstructor
     private static class Response {
-
-        private final boolean result;
+        private final boolean success;
         private final long delayInMillis;
-
     }
 
     Mono<ServerResponse> retrieveBlocking(ServerRequest serverRequest) {
-        long delay = delay(serverRequest);
+        long delay = getRequestedDelay(serverRequest);
         return ServerResponse.ok()
                 .body(Mono.just(new Response(true, delay))
                         .doOnNext(response -> {
@@ -49,33 +49,42 @@ public class WebfluxFnHandler {
     }
 
     Mono<ServerResponse> retrieveNonBlocking(ServerRequest serverRequest) {
-        long delay = delay(serverRequest);
-        return ServerResponse.ok().body(Mono.just(new Response(true, delay))
-                .delayElement(Duration.ofMillis(delay)), Response.class);
+        long delay = getRequestedDelay(serverRequest);
+        Mono<Response> response = Mono
+                .just(new Response(true, delay))
+                .delayElement(Duration.ofMillis(delay));
+        return ServerResponse
+                .ok()
+                .body(response, Response.class);
     }
 
+    // TODO this is pretty much the same as /blocking/{delay}, replace?
     Mono<ServerResponse> retrieveLegacyBlocking(ServerRequest serverRequest) {
         return Mono.fromCallable(() -> {
-            long delay = delay(serverRequest);
-            try {
-                Thread.sleep(delay);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            return new Response(true, delay);
-        })
+                    long delay = getRequestedDelay(serverRequest);
+                    try {
+                        Thread.sleep(delay);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return new Response(true, delay);
+                })
                 .subscribeOn(Schedulers.elastic())
                 .flatMap(response -> ServerResponse.ok().syncBody(response));
-
     }
 
-    Mono<ServerResponse> retreiveUsers(ServerRequest serverRequest) {
-        WebClient client = WebClient.create("http://localhost:8081");
-        return ServerResponse.ok().body(client
+    private WebClient client = WebClient.create("http://localhost:8081");
+
+    Mono<ServerResponse> retrieveUsers(ServerRequest serverRequest) {
+        Mono<String> response = client
                 .get()
                 .uri("/api/users")
                 .retrieve()
-                .bodyToMono(String.class), String.class);
+                .bodyToMono(String.class);
+        return ServerResponse
+                .ok()
+                .contentType(APPLICATION_JSON_UTF8)
+                .body(response, String.class);
     }
 
     Mono<ServerResponse> userRegistrations(ServerRequest serverRequest) {
@@ -85,13 +94,15 @@ public class WebfluxFnHandler {
     }
 
     Flux<UserRegisteredEvent> userRegistrations() {
-        return Flux.range(0, 10000).subscribeOn(Schedulers.single())
+        return Flux
+                .range(0, 1000)
+                .subscribeOn(Schedulers.single())
                 .map(id -> new UserRegisteredEvent(id, "John Smith " + id))
                 .onBackpressureDrop(userRegisteredEvent -> log.info("Dropped {}", userRegisteredEvent));
     }
 
-    private long delay(ServerRequest serverRequest) {
-        return Long.parseLong(serverRequest.pathVariable(WebFluxFnRouter.DELAY_PATH_VAR));
+    private long getRequestedDelay(ServerRequest serverRequest) {
+        return Long.parseLong(serverRequest.pathVariable("delay"));
     }
 
 }

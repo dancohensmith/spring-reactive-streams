@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 @RestController
-public class UserRespositoryController {
+public class UserRepositoryController {
     @RequestMapping(value = "/api/users")
     public List<User> getUsers() {
         return getUsersFromRepository();
@@ -16,7 +16,7 @@ public class UserRespositoryController {
 
     private List<User> getUsersFromRepository() {
         return LongStream
-                .range(1, 30)
+                .range(1, 200)
                 .mapToObj(i -> new User(i, "John Smith " + i))
                 .collect(Collectors.toList());
     }
