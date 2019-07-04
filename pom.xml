@@ -19,6 +19,7 @@
         <module>spring-mvc-example</module>
         <module>spring-webflux-example</module>
         <module>spring-webclient-example</module>
+        <module>user-service-webflux</module>
     </modules>
     <dependencyManagement>
         <dependencies>

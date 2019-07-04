@@ -21,6 +21,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 @Slf4j
 public class WebfluxFnHandler {
 
+    private final WebClient client;
+
     @Data
     @RequiredArgsConstructor
     private static class UserRegisteredEvent {
@@ -73,7 +75,7 @@ public class WebfluxFnHandler {
                 .flatMap(response -> ServerResponse.ok().syncBody(response));
     }
 
-    private WebClient client = WebClient.create("http://localhost:8081");
+
 
     Mono<ServerResponse> retrieveUsers(ServerRequest serverRequest) {
         Mono<String> response = client

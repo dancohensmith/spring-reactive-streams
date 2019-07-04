@@ -15,6 +15,7 @@ import java.time.Duration;
 @RequestMapping("/controller")
 public class WebfluxController {
 
+    private final WebClient client;
     @Data
     @RequiredArgsConstructor
     public static class Response {
@@ -24,7 +25,7 @@ public class WebfluxController {
 
     @GetMapping(value = "/blocking/{delay}")
     public Mono<Response> blocking(@PathVariable("delay") long delay) {
-        return Mono.just(new Response(true, delay))
+        return Mono.just(new Response(true, delay)).delayElement(Duration.ofMillis(delay))
                 .doOnNext(response -> {
                     try {
                         Thread.sleep(delay);
@@ -53,7 +54,6 @@ public class WebfluxController {
        }).subscribeOn(Schedulers.elastic());
     }
 
-    private WebClient client = WebClient.create("http://localhost:8081");
 
     @GetMapping(value = "/ui/users", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public Mono<String> getUsers() {

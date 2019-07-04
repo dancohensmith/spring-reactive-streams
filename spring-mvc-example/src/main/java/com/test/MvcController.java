@@ -3,13 +3,13 @@ package com.test;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -20,7 +20,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @RequestMapping("/mvc")
 @RequiredArgsConstructor
 public class MvcController {
-    private ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final WebClient client= WebClient.create("http://localhost:8081");
 
     @Data
     @RequiredArgsConstructor
@@ -48,7 +49,12 @@ public class MvcController {
     private RestTemplate restTemplate = new RestTemplate();
 
     @GetMapping(value = "/ui/users")
-    public ResponseEntity<String> getUsers() {
-        return restTemplate.getForEntity("http://localhost:8081/api/users", String.class);
+    public String getUsers() {
+        //return restTemplate.getForEntity("http://localhost:8081/api/users", String.class);
+        return   client
+                .get()
+                .uri("/api/users")
+                .retrieve()
+                .bodyToMono(String.class).block();
     }
 }
