@@ -78,6 +78,7 @@ public class WebfluxFnHandler {
 
 
     Mono<ServerResponse> retrieveUsers(ServerRequest serverRequest) {
+        log.info("Retrieving users");
         Mono<String> response = client
                 .get()
                 .uri("/api/users")

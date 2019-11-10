@@ -25,6 +25,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_UTF8;
 public class WebfluxFnHandler {
 
     public Mono<ServerResponse> users(ServerRequest serverRequest) {
+        log.info("Request for users");
         return ServerResponse.ok().syncBody(IntStream
                 .range(1, 200)
                 .mapToObj(i -> new User(i, "John Smith " + i))
